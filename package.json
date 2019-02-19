@@ -1,0 +1,27 @@
+{
+  "name": "pickup-eecs",
+  "version": "1.0.0",
+  "description": "Corny EECS-related pickup lines API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/guppy0130/pickup-eecs.git"
+  },
+  "author": "guppy0130",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/guppy0130/pickup-eecs/issues"
+  },
+  "homepage": "https://gitlab.com/guppy0130/pickup-eecs#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-hbs": "^2.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^5.14.1"
+  }
+}
