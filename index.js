@@ -46,6 +46,12 @@ app.get('/api', (req, res) => {
     res.send(selectRandomLine());
 });
 
+app.get('/add', (req, res) => {
+    res.render('add', {
+        title: `${data.title} - Add`
+    });
+});
+
 app.post('/add', parser, (req, res) => {
     if (data.lines.includes(req.body.msg)) {
         res.sendStatus(409);
