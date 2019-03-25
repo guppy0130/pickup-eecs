@@ -1,9 +1,15 @@
 const express = require('express');
 const hbs = require('express-hbs');
+const bodyParser = require('body-parser');
 
 const app = express();
 const port = process.env.PORT || 3000;
 const prod = process.env.PRODUCTION || true;
+
+const parser = bodyParser.urlencoded({
+    extended: false,
+    parameterLimit: 2 // msg, tags
+});
 
 const readline = require('readline');
 readline.createInterface({
@@ -30,13 +36,23 @@ const selectRandomLine = () => {
 };
 
 app.get('/', (req, res) => {
-    data['title'] = `${data.title} - Index`;
-    data['message'] = selectRandomLine();
-    res.render('index', data);
+    res.render('index', {
+        title: data.title,
+        message: selectRandomLine()
+    });
 });
 
 app.get('/api', (req, res) => {
     res.send(selectRandomLine());
+});
+
+app.post('/add', parser, (req, res) => {
+    if (data.lines.includes(req.body.msg)) {
+        res.sendStatus(409);
+        return;
+    }
+    data.lines.push(req.body.msg);
+    res.sendStatus(201);
 });
 
 app.listen(port, () => {
