@@ -6,6 +6,12 @@ const app = express();
 const port = process.env.PORT || 3000;
 const prod = process.env.PRODUCTION || true;
 
+const fs = require('fs');
+const filePath = 'data.txt';
+const fsWrite = fs.createWriteStream(filePath, {
+    flags: 'a'
+});
+
 const parser = bodyParser.urlencoded({
     extended: false,
     parameterLimit: 2 // msg, tags
@@ -13,7 +19,7 @@ const parser = bodyParser.urlencoded({
 
 const readline = require('readline');
 readline.createInterface({
-    input: require('fs').createReadStream('data.txt')
+    input: fs.createReadStream('data.txt')
 }).on('line', line => {
     data.lines.push(line);
 });
@@ -57,7 +63,17 @@ app.post('/add', parser, (req, res) => {
         res.sendStatus(409);
         return;
     }
+    // validate the line
+    // should be only one line long (no newline characters)
+    // should have none of the following characters: .?!
+    if (req.body.msg.match(/\n/gi) || req.body.msg.match(/\.|\?|!/gi)) {
+        res.sendStatus(400);
+        return;
+    }
+    const msg = `${req.body.msg}\t${JSON.stringify(req.body.tags.split(' '))}`;
+    console.log(`Writing ${msg}`);
     data.lines.push(req.body.msg);
+    fsWrite.write(`\n${msg}`);
     res.sendStatus(201);
 });
 
