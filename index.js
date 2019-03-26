@@ -21,7 +21,11 @@ const readline = require('readline');
 readline.createInterface({
     input: fs.createReadStream('data.txt')
 }).on('line', line => {
-    data.lines.push(line);
+    let info = line.split('\t');
+    data.lines.push({
+        msg: info[0],
+        tags: info[1]
+    });
 });
 
 app.engine('hbs', hbs.express4({
@@ -38,18 +42,24 @@ const data = {
 };
 
 const selectRandomLine = () => {
-    return data.lines[Math.floor(Math.random() * data.lines.length)];
+    let msg = data.lines[Math.floor(Math.random() * data.lines.length)];
+    while (msg.msg === '') {
+        msg = data.lines[Math.floor(Math.random() * data.lines.length)];
+    }
+    return msg;
 };
 
 app.get('/', (req, res) => {
+    let msg = selectRandomLine();
     res.render('index', {
         title: data.title,
-        message: selectRandomLine()
+        message: msg.msg,
+        tags: msg.tags
     });
 });
 
 app.get('/api', (req, res) => {
-    res.send(selectRandomLine());
+    res.json(selectRandomLine());
 });
 
 app.get('/add', (req, res) => {
@@ -71,7 +81,7 @@ app.post('/add', parser, (req, res) => {
         return;
     }
     const msg = `${req.body.msg}\t${JSON.stringify(req.body.tags.split(' '))}`;
-    console.log(`Writing ${msg}`);
+    console.log(`Writing: ${msg}`);
     data.lines.push(req.body.msg);
     fsWrite.write(`\n${msg}`);
     res.sendStatus(201);
