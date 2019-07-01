@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "lint": "sass-lint-auto-fix && eslint index.js --fix"
   },
   "repository": {
     "type": "git",
@@ -24,6 +26,7 @@
     "node-sass-middleware": "^0.11.0"
   },
   "devDependencies": {
-    "eslint": "^5.16.0"
+    "eslint": "^5.16.0",
+    "sass-lint-auto-fix": "^0.17.0"
   }
 }

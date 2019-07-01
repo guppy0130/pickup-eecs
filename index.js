@@ -23,10 +23,14 @@ readline.createInterface({
     input: fs.createReadStream('data.txt')
 }).on('line', line => {
     let info = line.split('\t');
-    data.lines.push({
-        msg: info[0],
-        tags: JSON.parse(info[1])
-    });
+    let tags = JSON.parse(info[1]);
+
+    for (let tag of tags) {
+        if (data.lines[tag] === undefined) {
+            data.lines[tag] = [];
+        }
+        data.lines[tag].push(info[0]);
+    }
 });
 
 app.engine('.hbs', hbs({
@@ -46,47 +50,57 @@ app.use('/styles', express.static(`${__dirname}/styles`));
 const data = {
     title: 'Pickup-EECS',
     prod: prod,
-    lines: []
+    lines: {}
+};
+
+const random = (max) => {
+    return Math.floor(Math.random() * Math.floor(max));
 };
 
 const selectRandomLine = (tags) => {
-    let msg = data.lines[Math.floor(Math.random() * data.lines.length)];
-    // if msg is empty or desired tags aren't in msg.tags
-    if (tags && tags.every((t) => {
-        console.log(msg.tags.includes(t));
-        msg.tags.includes(t);
-    })) {
-        console.log('ok');
+    if (tags === undefined || tags.length === 0) {
+        console.log('no tags defined');
+        // return a random line from any
+        let lines = data.lines[Object.keys(data.lines)[random(Object.keys(data.lines).length)]];
+        console.log(lines);
+        return lines[random(lines.length)];
     }
-    while (msg.msg === '' && (msg.tags && msg.tags.length > 0) && tags.every(t => msg.tags.includes(t))) {
-        console.log(tags);
-        msg = data.lines[Math.floor(Math.random() * data.lines.length)];
+
+    let possibles = data.lines[tags.shift()];
+    for (let tag of tags) {
+        let lines = data.lines[tag];
+        possibles = [...possibles].filter(value => lines.includes(value));
     }
-    return msg;
+
+    return possibles[random(possibles.length)];
 };
 
-app.get('/:tags(^[^api])', (req, res) => {
-    //console.log(req.params.tags);
-    let msg = selectRandomLine();
-    res.render('index', {
-        title: data.title,
-        message: msg.msg,
-        tags: msg.tags
-    });
+app.get('/favicon.ico', (req, res) => {
+    return res.status(404);
 });
 
-//app.get('/wholesome', (req, res) => {
-//    let msg = selectRandomLine(['wholesome']);
-//    res.render('index', {
-//        title: data.title,
-//        message: msg.msg,
-//        tags: msg.tags
-//    });
-//});
+app.get('/api/:tags?', (req, res) => {
+    let msg = selectRandomLine(req.params.tags.split(',') || []);
+    if (typeof msg !== 'string') {
+        return res.status(404).json({
+            reason: 'no line exists with all those tags',
+            tags: req.params.tags.split(',')
+        });
+    }
+    return res.json(msg);
+});
 
-app.get('/api/:tags', (req, res) => {
-    console.log(req.params.tags);
-    res.json(selectRandomLine());
+app.get('/:tags?', (req, res) => {
+    let msg = selectRandomLine(req.params.tags.split(',') || []);
+    if (typeof msg !== 'string') {
+        return res.render('404', {
+            message: 'no line exists with all those tags'
+        });
+    }
+    return res.render('index', {
+        title: data.title,
+        message: msg
+    });
 });
 
 app.get('/add', (req, res) => {
@@ -96,27 +110,36 @@ app.get('/add', (req, res) => {
 });
 
 app.post('/add', parser, (req, res) => {
-    for (let message of data.lines) {
-        if (message.msg == req.body.msg) {
-            res.sendStatus(409);
-            return;
+    // 409 all duplicates. This appears to be an big-O(n^2) operation
+
+    for (let tag of Object.keys(data.lines)) {
+        for (let line of data.lines[tag]) {
+            if (line === req.body.msg) {
+                return res.sendStatus(409);
+            }
         }
     }
+
     // validate the line
     // should be only one line long (no newline characters)
     // should have none of the following characters: .?!
     if (req.body.msg.match(/\n/gi) || req.body.msg.match(/\.|\?|!/gi)) {
-        res.sendStatus(400);
-        return;
+        return res.sendStatus(400);
+    }
+    // validate tags - looking for array
+    if (!Array.isArray(req.params.tags)) {
+        return res.sendStatus(400);
     }
     const msg = `${req.body.msg}\t${JSON.stringify(req.body.tags.split(' '))}`;
+
     console.log(`Writing: ${msg}`);
-    data.lines.push({
-        msg: req.body.msg,
-        tags: req.body.tags
-    });
+
+    // add the line to each of the tags
+    for (let tag of req.params.tags) {
+        data.lines[tag] = req.body.msg;
+    }
     fsWrite.write(`\n${msg}`);
-    res.sendStatus(201);
+    return res.sendStatus(201);
 });
 
 app.listen(port, () => {
