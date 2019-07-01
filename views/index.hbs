@@ -1,11 +1,20 @@
-{{!< base}}
+<div id="postcard">
+    <div id="message">
+        <p>{{message}}</p>
+    </div>
+    <div id="addr-block">
+        <div id="stamp"></div>
+        <form id="email-form">
+            <label>Your email:</label>
+            <input type="email" name="return-email">
+            <label>Their email:</label>
+            <input type="email" name="return-email">
+            <div class="g-recaptcha" data-sitekey="6LfqbqsUAAAAAEOgkTA4pOKiYUQbYA6UFSbHMLl5"></div>
+            <div id="send-btn">
+                <input type="submit" value="SEND">
+            </div>
+        </form>
+    </div>
+</div>
 
-{{#contentFor 'custom_css'}}
-<style>
-    body {
-        background-color: pink;
-    }
-</style>
-{{/contentFor}}
-
-<p>{{message}}</p>
+<div id="about">About</div>

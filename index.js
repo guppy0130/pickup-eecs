@@ -1,6 +1,7 @@
 const express = require('express');
-const hbs = require('express-hbs');
+const hbs = require('express-handlebars');
 const bodyParser = require('body-parser');
+const sass = require('node-sass-middleware');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,12 +29,19 @@ readline.createInterface({
     });
 });
 
-app.engine('hbs', hbs.express4({
-    partialsDir: `${__dirname}/views/partials`,
-    layoutsDir: `${__dirname}/views/layouts`
+app.engine('.hbs', hbs({
+    extname: '.hbs'
 }));
-app.set('view engine', 'hbs');
-app.set('views', `${__dirname}/views`);
+app.set('view engine', '.hbs');
+
+app.use(sass({
+    src: `${__dirname}/styles`,
+    dest: `${__dirname}/styles`,
+    outputStyle: 'compressed',
+    prefix: '/styles'
+}));
+
+app.use('/styles', express.static(`${__dirname}/styles`));
 
 const data = {
     title: 'Pickup-EECS',
