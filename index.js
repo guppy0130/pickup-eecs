@@ -24,7 +24,7 @@ readline.createInterface({
     let info = line.split('\t');
     data.lines.push({
         msg: info[0],
-        tags: info[1]
+        tags: JSON.parse(info[1])
     });
 });
 
@@ -41,15 +41,24 @@ const data = {
     lines: []
 };
 
-const selectRandomLine = () => {
+const selectRandomLine = (tags) => {
     let msg = data.lines[Math.floor(Math.random() * data.lines.length)];
-    while (msg.msg === '') {
+    // if msg is empty or desired tags aren't in msg.tags
+    if (tags && tags.every((t) => {
+        console.log(msg.tags.includes(t));
+        msg.tags.includes(t);
+    })) {
+        console.log('ok');
+    }
+    while (msg.msg === '' && (msg.tags && msg.tags.length > 0) && tags.every(t => msg.tags.includes(t))) {
+        console.log(tags);
         msg = data.lines[Math.floor(Math.random() * data.lines.length)];
     }
     return msg;
 };
 
-app.get('/', (req, res) => {
+app.get('/:tags(^[^api])', (req, res) => {
+    //console.log(req.params.tags);
     let msg = selectRandomLine();
     res.render('index', {
         title: data.title,
@@ -58,7 +67,17 @@ app.get('/', (req, res) => {
     });
 });
 
-app.get('/api', (req, res) => {
+//app.get('/wholesome', (req, res) => {
+//    let msg = selectRandomLine(['wholesome']);
+//    res.render('index', {
+//        title: data.title,
+//        message: msg.msg,
+//        tags: msg.tags
+//    });
+//});
+
+app.get('/api/:tags', (req, res) => {
+    console.log(req.params.tags);
     res.json(selectRandomLine());
 });
 
@@ -69,9 +88,11 @@ app.get('/add', (req, res) => {
 });
 
 app.post('/add', parser, (req, res) => {
-    if (data.lines.includes(req.body.msg)) {
-        res.sendStatus(409);
-        return;
+    for (let message of data.lines) {
+        if (message.msg == req.body.msg) {
+            res.sendStatus(409);
+            return;
+        }
     }
     // validate the line
     // should be only one line long (no newline characters)
@@ -82,7 +103,10 @@ app.post('/add', parser, (req, res) => {
     }
     const msg = `${req.body.msg}\t${JSON.stringify(req.body.tags.split(' '))}`;
     console.log(`Writing: ${msg}`);
-    data.lines.push(req.body.msg);
+    data.lines.push({
+        msg: req.body.msg,
+        tags: req.body.tags
+    });
     fsWrite.write(`\n${msg}`);
     res.sendStatus(201);
 });
