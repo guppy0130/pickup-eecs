@@ -62,6 +62,9 @@ const selectRandomLine = (tags) => {
         console.log('no tags defined');
         // return a random line from any
         let lines = data.lines[Object.keys(data.lines)[random(Object.keys(data.lines).length)]];
+        if (!lines) {
+            return [];
+        }
         return lines[random(lines.length)];
     }
 
@@ -95,6 +98,10 @@ app.get('/add', (req, res) => {
     res.render('add', {
         title: `${data.title} - Add`
     });
+});
+
+app.get('/about', (req, res) => {
+    res.render('about');
 });
 
 app.get('/:tags?', (req, res) => {

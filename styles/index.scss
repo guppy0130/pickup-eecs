@@ -129,10 +129,21 @@ form {
     transform-origin: 0 0;
 }
 
-#about {
+#links {
     font-size: 2em;
     margin: 1em auto 0;
     width: 50vh;
+    display: flex;
+    justify-content: space-between;
+
+    a {
+        color: black;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
 
     @media screen and (min-width: 600px) {
         width: 70vh;
@@ -144,4 +155,21 @@ form {
     align-items: center;
     display: flex;
     justify-content: center;
+}
+
+#about {
+    font-size: 2em;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-content: center;
+    align-items: center;
+
+    a {
+        color: #009fb7;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
 }
