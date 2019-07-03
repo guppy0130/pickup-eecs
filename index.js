@@ -59,7 +59,6 @@ const random = (max) => {
 
 const selectRandomLine = (tags) => {
     if (tags === undefined || tags.length === 0) {
-        console.log('no tags defined');
         // return a random line from any
         let lines = data.lines[Object.keys(data.lines)[random(Object.keys(data.lines).length)]];
         if (!lines) {
@@ -125,7 +124,6 @@ app.post('/add', parser, (req, res) => {
         if (data.lines[tag]) {
             for (let line of data.lines[tag]) {
                 if (line.match(req.body.msg)) {
-                    console.log(line);
                     return res.status(409).render('404', {
                         message: 'Line already exists with those tags, sorry'
                     });
