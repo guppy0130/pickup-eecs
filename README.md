@@ -19,10 +19,6 @@ Please lint before committing `:(`
 * responses read in from `/data.txt`
 * tagging
 
-### Todo
-
-* `/add` endpoint UI
-
 ### Tagging/Data Structure
 
 ```javascript

@@ -62,7 +62,6 @@ const selectRandomLine = (tags) => {
         console.log('no tags defined');
         // return a random line from any
         let lines = data.lines[Object.keys(data.lines)[random(Object.keys(data.lines).length)]];
-        console.log(lines);
         return lines[random(lines.length)];
     }
 
@@ -72,6 +71,8 @@ const selectRandomLine = (tags) => {
         possibles = [...possibles].filter(value => lines.includes(value));
     }
 
+    possibles = possibles || [];
+
     return possibles[random(possibles.length)];
 };
 
@@ -80,7 +81,7 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 app.get('/api/:tags?', (req, res) => {
-    let msg = selectRandomLine(req.params.tags.split(',') || []);
+    let msg = selectRandomLine(req.params.tags ? req.params.tags.split(',') : []);
     if (typeof msg !== 'string') {
         return res.status(404).json({
             reason: 'no line exists with all those tags',
@@ -90,8 +91,14 @@ app.get('/api/:tags?', (req, res) => {
     return res.json(msg);
 });
 
+app.get('/add', (req, res) => {
+    res.render('add', {
+        title: `${data.title} - Add`
+    });
+});
+
 app.get('/:tags?', (req, res) => {
-    let msg = selectRandomLine(req.params.tags.split(',') || []);
+    let msg = selectRandomLine(req.params.tags ? req.params.tags.split(',') : []);
     if (typeof msg !== 'string') {
         return res.render('404', {
             message: 'no line exists with all those tags'
@@ -103,19 +110,19 @@ app.get('/:tags?', (req, res) => {
     });
 });
 
-app.get('/add', (req, res) => {
-    res.render('add', {
-        title: `${data.title} - Add`
-    });
-});
-
 app.post('/add', parser, (req, res) => {
     // 409 all duplicates. This appears to be an big-O(n^2) operation
+    let tags = req.body.tags.split(',');
 
-    for (let tag of Object.keys(data.lines)) {
-        for (let line of data.lines[tag]) {
-            if (line === req.body.msg) {
-                return res.sendStatus(409);
+    for (let tag of tags) {
+        if (data.lines[tag]) {
+            for (let line of data.lines[tag]) {
+                if (line.match(req.body.msg)) {
+                    console.log(line);
+                    return res.status(409).render('404', {
+                        message: 'Line already exists with those tags, sorry'
+                    });
+                }
             }
         }
     }
@@ -124,22 +131,22 @@ app.post('/add', parser, (req, res) => {
     // should be only one line long (no newline characters)
     // should have none of the following characters: .?!
     if (req.body.msg.match(/\n/gi) || req.body.msg.match(/\.|\?|!/gi)) {
-        return res.sendStatus(400);
+        return res.status(400).render('404', {
+            message: 'Lines should be only one line long and have none of the following characters: .?!'
+        });
     }
-    // validate tags - looking for array
-    if (!Array.isArray(req.params.tags)) {
-        return res.sendStatus(400);
-    }
-    const msg = `${req.body.msg}\t${JSON.stringify(req.body.tags.split(' '))}`;
-
-    console.log(`Writing: ${msg}`);
 
     // add the line to each of the tags
-    for (let tag of req.params.tags) {
-        data.lines[tag] = req.body.msg;
+    for (let tag of tags) {
+        if (!data.lines[tag]) {
+            data.lines[tag] = [];
+        }
+        data.lines[tag].push(req.body.msg);
     }
-    fsWrite.write(`\n${msg}`);
-    return res.sendStatus(201);
+    fsWrite.write(`\n${req.body.msg}\t${JSON.stringify(tags)}`);
+    return res.status(201).render('404', {
+        message: 'Thanks for submitting'
+    });
 });
 
 app.listen(port, () => {
