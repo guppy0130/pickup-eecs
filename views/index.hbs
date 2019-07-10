@@ -3,12 +3,13 @@
         <p>{{message}}</p>
     </div>
     <div id="addr-block">
-        <form id="email-form">
+        <form id="email-form" action="/send" method="post">
             <label>Your email:</label>
-            <input type="email" name="return-email">
+            <input type="email" name="from" required>
             <label>Their email:</label>
-            <input type="email" name="return-email">
+            <input type="email" name="to" required>
             <div class="g-recaptcha" data-sitekey="6LfqbqsUAAAAAEOgkTA4pOKiYUQbYA6UFSbHMLl5"></div>
+            <input value="{{number}}" name="number" style="visibility: hidden">
             <div id="send-btn">
                 <input type="submit" value="SEND">
             </div>
