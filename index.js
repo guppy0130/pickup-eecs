@@ -103,6 +103,10 @@ app.get('/about', (req, res) => {
     res.render('about');
 });
 
+app.get('/:id(\\d+)', (req, res) => {
+    console.log(`id is: ${req.params.id}`);
+});
+
 app.get('/:tags?', (req, res) => {
     let msg = selectRandomLine(req.params.tags ? req.params.tags.split(',') : []);
     if (typeof msg !== 'string') {
