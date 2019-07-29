@@ -31,6 +31,11 @@ readline.createInterface({
         }
         data.lines[tag].push(info[0]);
     }
+
+    if (data.lines.all === undefined) {
+        data.lines.all = [];
+    }
+    data.lines.all.push(info[0]);
 });
 
 app.engine('.hbs', hbs({
@@ -57,14 +62,10 @@ const random = (max) => {
     return Math.floor(Math.random() * Math.floor(max));
 };
 
-const selectRandomLine = (tags) => {
+const selectLines = (tags) => {
     if (tags === undefined || tags.length === 0) {
         // return a random line from any
-        let lines = data.lines[Object.keys(data.lines)[random(Object.keys(data.lines).length)]];
-        if (!lines) {
-            return [];
-        }
-        return lines[random(lines.length)];
+        return data.lines.all;
     }
 
     let possibles = data.lines[tags.shift()];
@@ -74,7 +75,11 @@ const selectRandomLine = (tags) => {
     }
 
     possibles = possibles || [];
+    return possibles;
+}
 
+const selectRandomLine = (tags) => {
+    const possibles = selectLines(tags);
     return possibles[random(possibles.length)];
 };
 
@@ -103,20 +108,41 @@ app.get('/about', (req, res) => {
     res.render('about');
 });
 
-app.get('/:id(\\d+)', (req, res) => {
-    console.log(`id is: ${req.params.id}`);
-});
+app.get('/:tags?/:id?', (req, res) => {
+    const renderNoLines = (message) => {
+        return res.render('404', { message });
+    }
 
-app.get('/:tags?', (req, res) => {
-    let msg = selectRandomLine(req.params.tags ? req.params.tags.split(',') : []);
-    if (typeof msg !== 'string') {
-        return res.render('404', {
-            message: 'no line exists with all those tags'
-        });
+    const tags = (req.params.tags !== undefined && isNaN(req.params.tags)) ? req.params.tags.split(',') : [];
+    const id = !isNaN(req.params.tags) ? req.params.tags : req.params.id;
+    let msg;
+
+    if (tags.length > 0 && id !== undefined) {
+        // /tag/id
+        const selectedLines = selectLines(tags);
+        if (id < selectedLines.length) {
+            msg = selectedLines[id];
+        } else {
+            return renderNoLines('index too high');
+        }
+    } else if (tags.length === 0 && id !== undefined) {
+        // /id
+        if (id < data.lines.all.length) {
+            msg = data.lines.all[id];
+        } else {
+            return renderNoLines('index too high');
+        }
+    } else {
+        // /tags
+        msg = selectRandomLine(tags);
+        if (typeof msg !== 'string') {
+            return renderNoLines('no lines with those tags');
+        }
     }
     return res.render('index', {
         title: data.title,
-        message: msg
+        message: msg,
+        number: data.lines.all.indexOf(msg)
     });
 });
 

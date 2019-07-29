@@ -3,14 +3,56 @@
         <p>{{message}}</p>
     </div>
     <div id="addr-block">
-        <form id="email-form">
+        <form id="email-form" onsubmit="event.preventDefault(); formHandler()" name="form">
             <label>Your name:</label>
-            <input>
+            <input name="yourName" required onchange="verifyForm()">
             <label>Their name:</label>
-            <input>
-            <div id="send-btn">
+            <input name="theirName">
+            <input value="{{number}}" name="number" style="height: 0; visibility: hidden">
+            <div id="send-btn" style="display: none">
                 <input type="submit" value="Share">
             </div>
         </form>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Tocca.js/2.0.4/Tocca.min.js" integrity="sha256-sosww5TT0LN/E/qS01LEk3cRU5G0CvGOvTEJKCWLW6U=" crossorigin="anonymous"></script>
+<script>
+    const isMobile = window.innerWidth < 600;
+
+    const verifyForm = () => {
+        return document.forms['form']['yourName'].value !== '' && (isMobile ? document.getElementsByClassName('postcard')[0].classList.add('bounce') : document.getElementById('send-btn').style.display = 'inherit');
+    }
+
+    const formHandler = () => {
+        const form = document.forms['form'];
+        const theirName = form['theirName'].value;
+        const yourName = form['yourName'].value;
+        const number = form['number'].value;
+        console.log(theirName, yourName, number);
+
+        const urlParams = new URLSearchParams();
+        urlParams.append('theirName', theirName);
+        urlParams.append('yourName', yourName);
+        const compiledURL = `${window.location.origin}/${number}?${urlParams.toString()}`;
+
+        console.log(compiledURL);
+
+        if (navigator.share) {
+            // try the web share api first
+            navigator.share({
+                title: 'Pickup-EECS',
+                url: compiledURL
+            })
+        } else {
+            // attempt to copy the generated URL
+        }
+    }
+
+    if (isMobile) {
+        // add the swipe event listener if mobile
+        document.getElementsByClassName('postcard')[0].addEventListener('swipeup', (e) => {
+            return formHandler();
+        });
+    }
+</script>
