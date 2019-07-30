@@ -179,12 +179,21 @@ form {
 }
 
 @keyframes bounce {
-    0% {transform: translateY(-0px);}
-    50% {transform: translateY(-16px);}
-    100% {transform: translateY(-0px);}
+    0% {
+        transform: translateY(-0px);
+    }
+
+    50% {
+        transform: translateY(-16px);
+    }
+
+    100% {
+        transform: translateY(-0px);
+    }
 }
 
 .twiceSize {
     font-size: 2em;
+    margin-top: 0;
     text-align: center;
 }

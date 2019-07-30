@@ -5,7 +5,7 @@
     <div id="addr-block">
         <form id="email-form" onsubmit="event.preventDefault(); formHandler()" name="form">
             <label>Your name:</label>
-            <input name="yourName" required onchange="verifyForm()" value="{{your}}">
+            <input name="yourName" id="your" required onchange="verifyForm()" value="{{your}}">
             <label>Their name:</label>
             <input name="theirName" value="{{their}}">
             <input value="{{number}}" name="number" style="height: 0; visibility: hidden">
@@ -21,9 +21,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Tocca.js/2.0.4/Tocca.min.js" integrity="sha256-sosww5TT0LN/E/qS01LEk3cRU5G0CvGOvTEJKCWLW6U=" crossorigin="anonymous"></script>
 <script>
     const isMobile = window.innerWidth < 600;
+    const isShareable = !!document.getElementById('send-btn');
+    let lastValue = document.getElementById('your').value;
 
     const verifyForm = () => {
-        return document.forms['form']['yourName'].value !== '' && (isMobile ? document.getElementsByClassName('postcard')[0].classList.add('bounce') : document.getElementById('send-btn').style.display = 'inherit');
+        return document.forms['form']['yourName'].value !== lastValue && isShareable && (isMobile ? document.getElementsByClassName('postcard')[0].classList.add('bounce') : document.getElementById('send-btn').style.display = 'inherit');
     }
 
     const formHandler = () => {
@@ -49,6 +51,9 @@
         } else {
             // attempt to copy the generated URL
             console.log('falling back to autoCopy');
+            while (document.getElementsByClassName('twiceSize').length > 0) {
+                document.getElementsByClassName('twiceSize')[0].parentElement.removeChild(document.getElementsByClassName('twiceSize')[0]);
+            }
             const toCopy = document.createElement('input');
             toCopy.type = 'text';
             toCopy.value = compiledURL;
@@ -57,6 +62,7 @@
 
             const sendBtn = document.getElementById('send-btn');
             sendBtn.parentElement.appendChild(toCopy);
+            toCopy.focus();
             toCopy.select();
             if (!document.execCommand('copy')) {
                 sendBtn.style.display = 'none';
@@ -67,6 +73,7 @@
                 text.appendChild(document.createTextNode('Copied to clipboard!'));
                 sendBtn.parentElement.appendChild(text);
                 sendBtn.style.display = 'none';
+                toCopy.blur();
                 toCopy.style.display = 'none';
             }
         }
