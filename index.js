@@ -76,7 +76,7 @@ const selectLines = (tags) => {
 
     possibles = possibles || [];
     return possibles;
-}
+};
 
 const selectRandomLine = (tags) => {
     const possibles = selectLines(tags);
@@ -111,7 +111,7 @@ app.get('/about', (req, res) => {
 app.get('/:tags?/:id?', (req, res) => {
     const renderNoLines = (message) => {
         return res.render('404', { message });
-    }
+    };
 
     const tags = (req.params.tags !== undefined && isNaN(req.params.tags)) ? req.params.tags.split(',') : [];
     const id = !isNaN(req.params.tags) ? req.params.tags : req.params.id;
@@ -142,7 +142,9 @@ app.get('/:tags?/:id?', (req, res) => {
     return res.render('index', {
         title: data.title,
         message: msg,
-        number: data.lines.all.indexOf(msg)
+        number: data.lines.all.indexOf(msg),
+        your: req.query.yourName || '',
+        their: req.query.theirName || ''
     });
 });
 
@@ -178,6 +180,7 @@ app.post('/add', parser, (req, res) => {
         }
         data.lines[tag].push(req.body.msg);
     }
+    data.lines.all.push(req.body.msg);
     fsWrite.write(`\n${req.body.msg}\t${JSON.stringify(tags)}`);
     return res.status(201).render('404', {
         message: 'Thanks for submitting'

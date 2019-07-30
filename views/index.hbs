@@ -5,13 +5,15 @@
     <div id="addr-block">
         <form id="email-form" onsubmit="event.preventDefault(); formHandler()" name="form">
             <label>Your name:</label>
-            <input name="yourName" required onchange="verifyForm()">
+            <input name="yourName" required onchange="verifyForm()" value="{{your}}">
             <label>Their name:</label>
-            <input name="theirName">
+            <input name="theirName" value="{{their}}">
             <input value="{{number}}" name="number" style="height: 0; visibility: hidden">
-            <div id="send-btn" style="display: none">
-                <input type="submit" value="Share">
-            </div>
+            {{#unless your}}
+                <div id="send-btn" style="display: none">
+                    <input type="submit" value="Share">
+                </div>
+            {{/unless}}
         </form>
     </div>
 </div>
