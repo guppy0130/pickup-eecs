@@ -48,6 +48,27 @@
             })
         } else {
             // attempt to copy the generated URL
+            console.log('falling back to autoCopy');
+            const toCopy = document.createElement('input');
+            toCopy.type = 'text';
+            toCopy.value = compiledURL;
+            toCopy.style.display = 'block';
+            toCopy.style.opacity = 0;
+
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.parentElement.appendChild(toCopy);
+            toCopy.select();
+            if (!document.execCommand('copy')) {
+                sendBtn.style.display = 'none';
+                toCopy.style.opacity = 1;
+            } else {
+                const text = document.createElement('p');
+                text.classList.add('twiceSize');
+                text.appendChild(document.createTextNode('Copied to clipboard!'));
+                sendBtn.parentElement.appendChild(text);
+                sendBtn.style.display = 'none';
+                toCopy.style.display = 'none';
+            }
         }
     }
 
