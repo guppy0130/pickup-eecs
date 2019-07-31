@@ -25,7 +25,7 @@
     let lastValue = document.getElementById('your').value;
 
     const verifyForm = () => {
-        return document.forms['form']['yourName'].value !== lastValue && isShareable && (isMobile ? document.getElementsByClassName('postcard')[0].classList.add('bounce') : document.getElementById('send-btn').style.display = 'inherit');
+        return document.forms['form']['yourName'].value !== lastValue && isShareable && (isMobile ? document.getElementsByClassName('postcard')[0].classList.add('bounceUp') : document.getElementById('send-btn').style.display = 'inherit');
     }
 
     const formHandler = () => {
@@ -57,32 +57,41 @@
             const toCopy = document.createElement('input');
             toCopy.type = 'text';
             toCopy.value = compiledURL;
-            toCopy.style.display = 'block';
             toCopy.style.opacity = 0;
 
             const sendBtn = document.getElementById('send-btn');
             sendBtn.parentElement.appendChild(toCopy);
             toCopy.focus();
             toCopy.select();
+
+            const text = document.createElement('p');
+            text.classList.add('twiceSize');
+
             if (!document.execCommand('copy')) {
-                sendBtn.style.display = 'none';
+                // copy failed. let the user copy it themselves
                 toCopy.style.opacity = 1;
+                text.appendChild(document.createTextNode('Copy and paste this link to share'));
             } else {
-                const text = document.createElement('p');
-                text.classList.add('twiceSize');
-                text.appendChild(document.createTextNode('Copied to clipboard!'));
-                sendBtn.parentElement.appendChild(text);
-                sendBtn.style.display = 'none';
+                // copy success. let the user know it's pastable now
+                text.appendChild(document.createTextNode('Copied link to clipboard!'));
                 toCopy.blur();
                 toCopy.style.display = 'none';
             }
+            sendBtn.parentElement.appendChild(text);
+            sendBtn.style.display = 'none';
         }
     }
 
     if (isMobile) {
-        // add the swipe event listener if mobile
-        document.getElementsByClassName('postcard')[0].addEventListener('swipeup', (e) => {
+        const postcard = document.getElementsByClassName('postcard')[0];
+        // add the swipe up event listener if mobile
+        postcard.addEventListener('swipeup', () => {
             return formHandler();
+        });
+        // swipe to the sides!
+        postcard.classList.add('bounceRight');
+        postcard.addEventListener('swipeleft', () => {
+            location.assign(`${location.origin}/{{tag}}`);
         });
     }
 </script>

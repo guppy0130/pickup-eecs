@@ -24,18 +24,19 @@ readline.createInterface({
 }).on('line', line => {
     let info = line.split('\t');
     let tags = JSON.parse(info[1]);
+    let msg = info[0];
 
     for (let tag of tags) {
         if (data.lines[tag] === undefined) {
             data.lines[tag] = [];
         }
-        data.lines[tag].push(info[0]);
+        data.lines[tag].push(msg);
     }
 
     if (data.lines.all === undefined) {
         data.lines.all = [];
     }
-    data.lines.all.push(info[0]);
+    data.lines.all.push({msg, tags});
 });
 
 app.engine('.hbs', hbs({
@@ -135,16 +136,20 @@ app.get('/:tags?/:id?', (req, res) => {
     } else {
         // /tags
         msg = selectRandomLine(tags);
-        if (typeof msg !== 'string') {
+        if (typeof msg !== 'object' && typeof msg !== 'string') {
             return renderNoLines('no lines with those tags');
         }
     }
+
+    const tag = (req.params.tags !== undefined && isNaN(req.params.tags)) ? req.params.tags.split(',') : [];
+
     return res.render('index', {
         title: data.title,
-        message: msg,
+        message: msg.msg || msg,
         number: data.lines.all.indexOf(msg),
         your: req.query.yourName || '',
-        their: req.query.theirName || ''
+        their: req.query.theirName || '',
+        tag: tag.length > 0 ? tag : msg.tags.join(',')
     });
 });
 
