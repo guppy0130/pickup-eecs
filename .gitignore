@@ -1,3 +1,4 @@
 node_modules/
 /styles/index.css
 /.env
+/data.txt

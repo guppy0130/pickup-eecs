@@ -128,7 +128,8 @@ app.get('/:tags?/:id?', (req, res) => {
     };
 
     const tags = (req.params.tags !== undefined && isNaN(req.params.tags)) ? req.params.tags.split(',') : [];
-    const id = !isNaN(req.params.tags) ? req.params.tags : req.params.id;
+    let id = !isNaN(req.params.tags) ? req.params.tags : req.params.id;
+    id = id >= 0 ? id : data.lines.all.length + Number(id);
     let msg;
 
     try {
