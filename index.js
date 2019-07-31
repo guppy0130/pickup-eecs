@@ -62,7 +62,8 @@ const data = {
     title: 'Pickup-EECS',
     prod: prod,
     lines: {},
-    allLines: []
+    allLines: [],
+    GANALYTICS: process.env.GANALYTICS
 };
 
 const random = (max) => {
@@ -110,20 +111,26 @@ app.get('/api/:tags?', (req, res) => {
 
 app.get('/add', (req, res) => {
     res.render('add', {
-        title: `${data.title} - Add`
+        title: `${data.title} - Add`,
+        GANALYTICS: data.GANALYTICS,
+        prod
     });
 });
 
 app.get('/about', (req, res) => {
     res.render('about', {
-        title: `${data.title} - About`
+        title: `${data.title} - About`,
+        GANALYTICS: data.GANALYTICS,
+        prod
     });
 });
 app.get('/:tags?/:id?', (req, res) => {
     const renderNoLines = (message) => {
         return res.render('404', {
             title: `${data.title} - Error`,
-            message
+            message,
+            GANALYTICS: data.GANALYTICS,
+            prod
         });
     };
 
@@ -171,7 +178,9 @@ app.get('/:tags?/:id?', (req, res) => {
         number: data.lines.all.indexOf(msg),
         your: req.query.yourName || '',
         their: req.query.theirName || '',
-        tag: tag.length > 0 ? tag : msg.tags.join(',')
+        tag: tag.length > 0 ? tag : msg.tags.join(','),
+        GANALYTICS: data.GANALYTICS,
+        prod
     });
 });
 
@@ -184,7 +193,9 @@ app.post('/add', addParser, (req, res) => {
             for (let line of data.lines[tag]) {
                 if (line.match(req.body.msg)) {
                     return res.status(409).render('404', {
-                        message: 'Line already exists with those tags, sorry'
+                        message: 'Line already exists with those tags, sorry',
+                        GANALYTICS: data.GANALYTICS,
+                        prod
                     });
                 }
             }
@@ -196,7 +207,9 @@ app.post('/add', addParser, (req, res) => {
     // should have none of the following characters: .?!
     if (req.body.msg.match(/\n/gi) || req.body.msg.match(/\.|\?|!/gi)) {
         return res.status(400).render('404', {
-            message: 'Lines should be only one line long and have none of the following characters: .?!'
+            message: 'Lines should be only one line long and have none of the following characters: .?!',
+            GANALYTICS: data.GANALYTICS,
+            prod
         });
     }
 
@@ -214,7 +227,9 @@ app.post('/add', addParser, (req, res) => {
     fsWrite.write(`\n${req.body.msg}\t${JSON.stringify(tags)}`);
     return res.status(201).render('404', {
         title: `${data.title} - Submit Success`,
-        message: 'Thanks for submitting'
+        message: 'Thanks for submitting',
+        GANALYTICS: data.GANALYTICS,
+        prod
     });
 });
 
