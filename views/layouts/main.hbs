@@ -16,4 +16,10 @@
             <a href="/add">Add</a>
         </div>
     </body>
+    <script>
+        // soft keyboard changes viewport dimensions. disable that.
+        setTimeout(() => {
+            document.querySelector('meta[name=viewport]').setAttribute('content', `height=${window.visualViewport.height}px, width=${window.visualViewport.width}px, initial-scale=1.0`);
+        }, 300);
+    </script>
 </html>

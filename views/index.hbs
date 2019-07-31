@@ -3,16 +3,95 @@
         <p>{{message}}</p>
     </div>
     <div id="addr-block">
-        <form id="email-form" action="/send" method="post">
-            <label>Your email:</label>
-            <input type="email" name="from" required>
-            <label>Their email:</label>
-            <input type="email" name="to" required>
-            <div class="g-recaptcha" data-sitekey="6LfqbqsUAAAAAEOgkTA4pOKiYUQbYA6UFSbHMLl5"></div>
-            <input value="{{number}}" name="number" style="visibility: hidden">
-            <div id="send-btn">
-                <input type="submit" value="SEND">
-            </div>
+        <form id="email-form" onsubmit="event.preventDefault(); formHandler()" name="form">
+            <label>Your name:</label>
+            <input name="yourName" id="your" required onchange="verifyForm()" value="{{your}}">
+            <label>Their name:</label>
+            <input name="theirName" value="{{their}}">
+            <input value="{{number}}" name="number" style="height: 0; visibility: hidden">
+            {{#unless your}}
+                <div id="send-btn" style="display: none">
+                    <input type="submit" value="Share">
+                </div>
+            {{/unless}}
         </form>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Tocca.js/2.0.4/Tocca.min.js" integrity="sha256-sosww5TT0LN/E/qS01LEk3cRU5G0CvGOvTEJKCWLW6U=" crossorigin="anonymous"></script>
+<script>
+    const isMobile = window.innerWidth < 600;
+    const isShareable = !!document.getElementById('send-btn');
+    let lastValue = document.getElementById('your').value;
+
+    const verifyForm = () => {
+        return document.forms['form']['yourName'].value !== lastValue && isShareable && (isMobile ? document.getElementsByClassName('postcard')[0].classList.add('bounceUp') : document.getElementById('send-btn').style.display = 'inherit');
+    }
+
+    const formHandler = () => {
+        const form = document.forms['form'];
+        const theirName = form['theirName'].value;
+        const yourName = form['yourName'].value;
+        const number = form['number'].value;
+        console.log(theirName, yourName, number);
+
+        const urlParams = new URLSearchParams();
+        urlParams.append('theirName', theirName);
+        urlParams.append('yourName', yourName);
+        const compiledURL = `${window.location.origin}/${number}?${urlParams.toString()}`;
+
+        console.log(compiledURL);
+
+        if (navigator.share) {
+            // try the web share api first
+            navigator.share({
+                title: 'Pickup-EECS',
+                url: compiledURL
+            })
+        } else {
+            // attempt to copy the generated URL
+            console.log('falling back to autoCopy');
+            while (document.getElementsByClassName('twiceSize').length > 0) {
+                document.getElementsByClassName('twiceSize')[0].parentElement.removeChild(document.getElementsByClassName('twiceSize')[0]);
+            }
+            const toCopy = document.createElement('input');
+            toCopy.type = 'text';
+            toCopy.value = compiledURL;
+            toCopy.style.opacity = 0;
+
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.parentElement.appendChild(toCopy);
+            toCopy.focus();
+            toCopy.select();
+
+            const text = document.createElement('p');
+            text.classList.add('twiceSize');
+
+            if (!document.execCommand('copy')) {
+                // copy failed. let the user copy it themselves
+                toCopy.style.opacity = 1;
+                text.appendChild(document.createTextNode('Copy and paste this link to share'));
+            } else {
+                // copy success. let the user know it's pastable now
+                text.appendChild(document.createTextNode('Copied link to clipboard!'));
+                toCopy.blur();
+                toCopy.style.display = 'none';
+            }
+            sendBtn.parentElement.appendChild(text);
+            sendBtn.style.display = 'none';
+        }
+    }
+
+    if (isMobile) {
+        const postcard = document.getElementsByClassName('postcard')[0];
+        // add the swipe up event listener if mobile
+        postcard.addEventListener('swipeup', () => {
+            return formHandler();
+        });
+        // swipe to the sides!
+        postcard.classList.add('bounceRight');
+        postcard.addEventListener('swipeleft', () => {
+            location.assign(`${location.origin}/{{tag}}`);
+        });
+    }
+</script>

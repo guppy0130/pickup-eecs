@@ -12,11 +12,6 @@ if (!prod) {
     require('dotenv').config();
 }
 
-const sendGrid = require('@sendgrid/mail');
-sendGrid.setApiKey(process.env.SENDGRID_API_KEY);
-
-const rp = require('request-promise-native');
-
 const fs = require('fs');
 const filePath = 'data.txt';
 const fsWrite = fs.createWriteStream(filePath, {
@@ -28,31 +23,25 @@ const addParser = bodyParser.urlencoded({
     parameterLimit: 2 // msg, tags
 });
 
-const sendParser = bodyParser.urlencoded({
-    extended: true,
-    parameterLimit: 4 // to, from, captcha, number
-});
-
 const readline = require('readline');
-let lineNo = 0;
 readline.createInterface({
     input: fs.createReadStream('data.txt')
 }).on('line', line => {
     let info = line.split('\t');
     let tags = JSON.parse(info[1]);
-    data.allLines.push(info[0]);
+    let msg = info[0];
 
     for (let tag of tags) {
         if (data.lines[tag] === undefined) {
             data.lines[tag] = [];
         }
-        data.lines[tag].push({
-            number: lineNo,
-            line: info[0]
-        });
+        data.lines[tag].push(msg);
     }
 
-    lineNo++;
+    if (data.lines.all === undefined) {
+        data.lines.all = [];
+    }
+    data.lines.all.push({msg, tags});
 });
 
 app.engine('.hbs', hbs({
@@ -80,14 +69,10 @@ const random = (max) => {
     return Math.floor(Math.random() * Math.floor(max));
 };
 
-const selectRandomLine = (tags) => {
+const selectLines = (tags) => {
     if (tags === undefined || tags.length === 0) {
         // return a random line from any
-        let lines = data.lines[Object.keys(data.lines)[random(Object.keys(data.lines).length)]];
-        if (!lines) {
-            return [];
-        }
-        return lines[random(lines.length)];
+        return data.lines.all;
     }
 
     let possibles = data.lines[tags.shift()];
@@ -97,7 +82,11 @@ const selectRandomLine = (tags) => {
     }
 
     possibles = possibles || [];
+    return possibles;
+};
 
+const selectRandomLine = (tags) => {
+    const possibles = selectLines(tags);
     return possibles[random(possibles.length)];
 };
 
@@ -125,19 +114,47 @@ app.get('/add', (req, res) => {
 app.get('/about', (req, res) => {
     res.render('about');
 });
+app.get('/:tags?/:id?', (req, res) => {
+    const renderNoLines = (message) => {
+        return res.render('404', { message });
+    };
 
-app.get('/:tags?', (req, res) => {
-    let msg = selectRandomLine(req.params.tags ? req.params.tags.split(',') : []);
+    const tags = (req.params.tags !== undefined && isNaN(req.params.tags)) ? req.params.tags.split(',') : [];
+    const id = !isNaN(req.params.tags) ? req.params.tags : req.params.id;
+    let msg;
 
-    if (!Object.keys(msg).includes('line')) {
-        return res.render('404', {
-            message: 'no line exists with all those tags'
-        });
+    if (tags.length > 0 && id !== undefined) {
+        // /tag/id
+        const selectedLines = selectLines(tags);
+        if (id < selectedLines.length) {
+            msg = selectedLines[id];
+        } else {
+            return renderNoLines('index too high');
+        }
+    } else if (tags.length === 0 && id !== undefined) {
+        // /id
+        if (id < data.lines.all.length) {
+            msg = data.lines.all[id];
+        } else {
+            return renderNoLines('index too high');
+        }
+    } else {
+        // /tags
+        msg = selectRandomLine(tags);
+        if (typeof msg !== 'object' && typeof msg !== 'string') {
+            return renderNoLines('no lines with those tags');
+        }
     }
+
+    const tag = (req.params.tags !== undefined && isNaN(req.params.tags)) ? req.params.tags.split(',') : [];
+
     return res.render('index', {
         title: data.title,
-        message: msg.line,
-        number: msg.number
+        message: msg.msg || msg,
+        number: data.lines.all.indexOf(msg),
+        your: req.query.yourName || '',
+        their: req.query.theirName || '',
+        tag: tag.length > 0 ? tag : msg.tags.join(',')
     });
 });
 
@@ -173,53 +190,10 @@ app.post('/add', addParser, (req, res) => {
         }
         data.lines[tag].push(req.body.msg);
     }
+    data.lines.all.push(req.body.msg);
     fsWrite.write(`\n${req.body.msg}\t${JSON.stringify(tags)}`);
     return res.status(201).render('404', {
         message: 'Thanks for submitting'
-    });
-});
-
-app.post('/send', sendParser, (req, res) => {
-    console.log(req.body);
-
-    if (Object.values(req.body).includes('')) {
-        return res.render('404', {
-            message: 'missing info'
-        });
-    }
-
-    return rp.post({
-        url: 'https://www.google.com/recaptcha/api/siteverify',
-        form: {
-            secret: process.env.RECAPTCHA_KEY,
-            response: req.body['g-recaptcha-response']
-        }
-    }).then(captchaStatus => {
-        captchaStatus = JSON.parse(captchaStatus);
-        if (!captchaStatus.success) {
-            if (captchaStatus['error-codes'].includes('timeout-or-duplicate')) {
-                throw new Error('CAPTCHA expired. Return home?');
-            } else {
-                throw new Error(captchaStatus['status-codes']);
-            }
-        }
-    }).then(() => {
-        return sendGrid.send({
-            to: req.body.to,
-            from: req.body.from,
-            subject: 'Pickup-EECS',
-            text: data.allLines[req.body.number]
-        }).then(() => {
-            return res.status(200).render('404', {
-                message: 'Email sent!'
-            });
-        }).catch(() => {
-            throw new Error('failed to send email.');
-        });
-    }).catch(err => {
-        return res.status(400).render('404', {
-            message: err
-        });
     });
 });
 
