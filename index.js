@@ -133,7 +133,7 @@ app.get('/:tags?/:id?', (req, res) => {
     let msg;
 
     try {
-        if (tags.length > 0 && id !== undefined) {
+        if (tags.length > 0 && !isNaN(id)) {
             // /tag/id
             const selectedLines = selectLines(tags);
             if (id < selectedLines.length) {
@@ -141,7 +141,7 @@ app.get('/:tags?/:id?', (req, res) => {
             } else {
                 return renderNoLines('index too high');
             }
-        } else if (tags.length === 0 && id !== undefined) {
+        } else if (tags.length === 0 && !isNaN(id)) {
             // /id
             if (id < data.lines.all.length) {
                 msg = data.lines.all[id];
@@ -158,6 +158,8 @@ app.get('/:tags?/:id?', (req, res) => {
     } catch (err) {
         if (err.message === 'empty data') {
             return renderNoLines('no data! Be the first to add a line?');
+        } else {
+            return renderNoLines(err);
         }
     }
 
