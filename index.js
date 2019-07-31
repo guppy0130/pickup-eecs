@@ -87,6 +87,9 @@ const selectLines = (tags) => {
 
 const selectRandomLine = (tags) => {
     const possibles = selectLines(tags);
+    if (!possibles) {
+        throw new Error('empty data');
+    }
     return possibles[random(possibles.length)];
 };
 
@@ -123,26 +126,32 @@ app.get('/:tags?/:id?', (req, res) => {
     const id = !isNaN(req.params.tags) ? req.params.tags : req.params.id;
     let msg;
 
-    if (tags.length > 0 && id !== undefined) {
-        // /tag/id
-        const selectedLines = selectLines(tags);
-        if (id < selectedLines.length) {
-            msg = selectedLines[id];
+    try {
+        if (tags.length > 0 && id !== undefined) {
+            // /tag/id
+            const selectedLines = selectLines(tags);
+            if (id < selectedLines.length) {
+                msg = selectedLines[id];
+            } else {
+                return renderNoLines('index too high');
+            }
+        } else if (tags.length === 0 && id !== undefined) {
+            // /id
+            if (id < data.lines.all.length) {
+                msg = data.lines.all[id];
+            } else {
+                return renderNoLines('index too high');
+            }
         } else {
-            return renderNoLines('index too high');
+            // /tags
+            msg = selectRandomLine(tags);
+            if (typeof msg !== 'object' && typeof msg !== 'string') {
+                return renderNoLines('no lines with those tags');
+            }
         }
-    } else if (tags.length === 0 && id !== undefined) {
-        // /id
-        if (id < data.lines.all.length) {
-            msg = data.lines.all[id];
-        } else {
-            return renderNoLines('index too high');
-        }
-    } else {
-        // /tags
-        msg = selectRandomLine(tags);
-        if (typeof msg !== 'object' && typeof msg !== 'string') {
-            return renderNoLines('no lines with those tags');
+    } catch (err) {
+        if (err.message === 'empty data') {
+            return renderNoLines('no data! Be the first to add a line?');
         }
     }
 
@@ -190,7 +199,10 @@ app.post('/add', addParser, (req, res) => {
         }
         data.lines[tag].push(req.body.msg);
     }
-    data.lines.all.push(req.body.msg);
+    data.lines.all.push({
+        msg: req.body.msg,
+        tags
+    });
     fsWrite.write(`\n${req.body.msg}\t${JSON.stringify(tags)}`);
     return res.status(201).render('404', {
         message: 'Thanks for submitting'
