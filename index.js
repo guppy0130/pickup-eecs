@@ -115,11 +115,16 @@ app.get('/add', (req, res) => {
 });
 
 app.get('/about', (req, res) => {
-    res.render('about');
+    res.render('about', {
+        title: `${data.title} - About`
+    });
 });
 app.get('/:tags?/:id?', (req, res) => {
     const renderNoLines = (message) => {
-        return res.render('404', { message });
+        return res.render('404', {
+            title: `${data.title} - Error`,
+            message
+        });
     };
 
     const tags = (req.params.tags !== undefined && isNaN(req.params.tags)) ? req.params.tags.split(',') : [];
@@ -205,6 +210,7 @@ app.post('/add', addParser, (req, res) => {
     });
     fsWrite.write(`\n${req.body.msg}\t${JSON.stringify(tags)}`);
     return res.status(201).render('404', {
+        title: `${data.title} - Submit Success`,
         message: 'Thanks for submitting'
     });
 });
