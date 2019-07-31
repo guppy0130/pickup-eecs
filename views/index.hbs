@@ -33,14 +33,11 @@
         const theirName = form['theirName'].value;
         const yourName = form['yourName'].value;
         const number = form['number'].value;
-        console.log(theirName, yourName, number);
 
         const urlParams = new URLSearchParams();
         urlParams.append('theirName', theirName);
         urlParams.append('yourName', yourName);
         const compiledURL = `${window.location.origin}/${number}?${urlParams.toString()}`;
-
-        console.log(compiledURL);
 
         if (navigator.share) {
             // try the web share api first
@@ -50,7 +47,6 @@
             })
         } else {
             // attempt to copy the generated URL
-            console.log('falling back to autoCopy');
             while (document.getElementsByClassName('twiceSize').length > 0) {
                 document.getElementsByClassName('twiceSize')[0].parentElement.removeChild(document.getElementsByClassName('twiceSize')[0]);
             }
