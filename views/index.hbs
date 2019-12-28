@@ -7,7 +7,7 @@
             <label>Your name:</label>
             <input name="yourName" id="your" required onchange="verifyForm()" value="{{your}}">
             <label>Their name:</label>
-            <input name="theirName" value="{{their}}">
+            <input name="theirName" id="their" value="{{their}}">
             <input value="{{number}}" name="number" style="height: 0; visibility: hidden">
             {{#unless your}}
                 <div id="send-btn" style="display: none">

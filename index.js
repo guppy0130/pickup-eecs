@@ -25,11 +25,17 @@ const addParser = bodyParser.urlencoded({
 
 const readline = require('readline');
 readline.createInterface({
-    input: fs.createReadStream('data.txt')
+    input: fs.createReadStream(filePath)
 }).on('line', line => {
     let info = line.split('\t');
-    let tags = JSON.parse(info[1]);
     let msg = info[0];
+    let tags;
+    try {
+        tags = JSON.parse(info[1]);
+    } catch (e) {
+        // just skip junk
+        return;
+    }
 
     for (let tag of tags) {
         if (data.lines[tag] === undefined) {
@@ -205,7 +211,7 @@ app.post('/add', addParser, (req, res) => {
     // validate the line
     // should be only one line long (no newline characters)
     // should have none of the following characters: .?!
-    if (req.body.msg.match(/\n/gi) || req.body.msg.match(/\.|\?|!/gi)) {
+    if (req.body.msg.match(/\n/gi) || req.body.msg.match(/\.|\?|!/gi) || req.body.msg.match(/^$/gi)) {
         return res.status(400).render('404', {
             message: 'Lines should be only one line long and have none of the following characters: .?!',
             GANALYTICS: data.GANALYTICS,
@@ -224,7 +230,7 @@ app.post('/add', addParser, (req, res) => {
         msg: req.body.msg,
         tags
     });
-    fsWrite.write(`\n${req.body.msg}\t${JSON.stringify(tags)}`);
+    fsWrite.write(`${req.body.msg}\t${JSON.stringify(tags)}\n`);
     return res.status(201).render('404', {
         title: `${data.title} - Submit Success`,
         message: 'Thanks for submitting',
@@ -233,6 +239,14 @@ app.post('/add', addParser, (req, res) => {
     });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`listening on port ${port}`);
+});
+
+process.on('SIGINT', () => {
+    console.log('closing down');
+    server.close();
+    fsWrite.end();
+    // const cp = require('child_process');
+    // cp.exec(`sed '$d' ${filePath}`);
 });

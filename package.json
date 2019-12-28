@@ -4,10 +4,11 @@
   "description": "Corny EECS-related pickup lines API",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cypress run",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "lint": "sass-lint-auto-fix && eslint index.js --fix"
+    "lint": "sass-lint-auto-fix && eslint index.js --fix",
+    "ci": "start-server-and-test start http://localhost:3000 test"
   },
   "repository": {
     "type": "git",
@@ -26,8 +27,10 @@
     "node-sass-middleware": "^0.11.0"
   },
   "devDependencies": {
+    "cypress": "^3.8.1",
     "dotenv": "^8.0.0",
     "eslint": "^5.16.0",
-    "sass-lint-auto-fix": "^0.17.0"
+    "sass-lint-auto-fix": "^0.17.0",
+    "start-server-and-test": "^1.10.6"
   }
 }
