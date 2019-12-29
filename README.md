@@ -2,6 +2,8 @@
 
 ## Corny EECS-related pickup lines API
 
+[![Build Status](https://travis-ci.com/guppy0130/pickup-eecs.svg?branch=master)](https://travis-ci.com/guppy0130/pickup-eecs)
+
 ### Installation
 
 ```bash
